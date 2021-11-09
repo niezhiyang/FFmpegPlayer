@@ -1,48 +1,50 @@
-# For more information about using CMake with Android Studio, read the
-# documentation: https://d.android.com/studio/projects/add-native-code.html
-
-# Sets the minimum version of CMake required to build the native library.
 
 cmake_minimum_required(VERSION 3.10.2)
+# 添加整个文件夹的.h 这是ffmpeg的
+include_directories(include)
 
-# Declares and names the project.
+# 添加整个文件夹的.h 这是 soundtouch 的，用于处理 pcm 变速的
+include_directories(soundtouch/include)
+include_directories(soundtouch/SoundTouch)
+
 
 project("ffmpegplayer")
+# 把 CMakeLists.txt本目录下的所有的 cpp文件都 引入到 cpp_source 这个变量
+#file(GLOB cpp_source *.cpp)
+# 和下面一个道理，都可以直接放到 cpp_source 中
+aux_source_directory(. cpp_source)
 
-# Creates and names a library, sets it as either STATIC
-# or SHARED, and provides the relative paths to its source code.
-# You can define multiple libraries, and CMake builds them for you.
-# Gradle automatically packages shared libraries with your APK.
+# 添加 soundtoucch 的所有cpp 到 SOURCE 变量中
+aux_source_directory(./soundtouch/SoundTouch SOURCE)
 
-add_library( # Sets the name of the library.
-             native-lib
+# 相当于给下面的 target_link_libraries 配置了一个系统路径
+#比如 log，会从系统的路径找，所以 NFfmpeg 中的so 也会从系统找，如果找不到就从这个路径找，
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L${CMAKE_SOURCE_DIR}/libs/${ANDROID_ABI}")
+add_library(
+        native-lib
+        SHARED
+        ${cpp_source}
+        ${SOURCE}
+)
 
-             # Sets the library as a shared library.
-             SHARED
 
-             # Provides a relative path to your source file(s).
-             native-lib.cpp )
+find_library(
+        log-lib
 
-# Searches for a specified prebuilt library and stores the path as a
-# variable. Because CMake includes system libraries in the search path by
-# default, you only need to specify the name of the public NDK library
-# you want to add. CMake verifies that the library exists before
-# completing its build.
+        log)
 
-find_library( # Sets the name of the path variable.
-              log-lib
 
-              # Specifies the name of the NDK library that
-              # you want CMake to locate.
-              log )
-
-# Specifies libraries CMake should link to your target library. You
-# can link multiple libraries, such as libraries you define in this
-# build script, prebuilt third-party libraries, or system libraries.
-
-target_link_libraries( # Specifies the target library.
-                       native-lib
-
-                       # Links the target library to the log library
-                       # included in the NDK.
-                       ${log-lib} )
+target_link_libraries(
+        native-lib
+        ${log-lib}
+        avcodec
+        avdevice
+        avfilter
+        avformat
+        avutil
+        swresample
+        swscale
+        OpenSLES
+        # 系统 android.so 主要用Window.jni，如果不用NativeWindow,则不用添加
+        android
+)

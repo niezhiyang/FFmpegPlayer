@@ -17,6 +17,10 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags ""
+                abiFilters 'armeabi-v7a'
+            }
+            ndk {
+                abiFilters 'armeabi-v7a'
             }
         }
     }
@@ -36,6 +40,12 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+    sourceSets {
+        main {
+            // 用到so位置
+            jniLibs.srcDirs = ['src/main/cpp/libs']
+        }
     }
 }
 
